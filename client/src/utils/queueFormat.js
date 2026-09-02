@@ -26,3 +26,15 @@ export function stageWaitText(step) {
   const waitPart = wait === null || wait === undefined ? '' : ` (~${formatWaitMinutes(wait)})`;
   return `อีก ${step.aheadCount} คิว${waitPart}`;
 }
+
+/** "ชื่อ · HN 123456" (or just one half, or '') — every one of the 10 fixed templates' single rule
+ * for whether/how to show the patient's name and HN, driven by the admin-configurable
+ * settings.showPatientName/showHn toggles (2026-09-02: added after a real gap — several templates
+ * were silently never showing name/HN at all). Not used by the "custom" free-form layout, which
+ * already has its own finer-grained per-field visibility toggle (fieldLayout.js). */
+export function patientLineText(result, showPatientName, showHn) {
+  const parts = [];
+  if (showPatientName && result?.patientName) parts.push(result.patientName);
+  if (showHn && result?.hn) parts.push(`HN ${result.hn}`);
+  return parts.join(' · ');
+}

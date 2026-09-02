@@ -67,6 +67,8 @@ const form = reactive({
   fontSizeScale: 'medium',
   soundChoice: 'soft',
   cardTemplate: DEFAULT_CARD_TEMPLATE,
+  showPatientName: true,
+  showHn: true,
 });
 
 const fieldLayout = reactive({ ...DEFAULT_FIELD_LAYOUT });
@@ -109,6 +111,8 @@ function initFormFromSettings() {
   form.fontSizeScale = settings.fontSizeScale;
   form.soundChoice = settings.soundChoice;
   form.cardTemplate = settings.cardTemplate ?? DEFAULT_CARD_TEMPLATE;
+  form.showPatientName = settings.showPatientName ?? true;
+  form.showHn = settings.showHn ?? true;
   Object.assign(fieldLayout, normalizeFieldLayout(settings.fieldLayout));
   nextTick(() => {
     allowAutoPreview = true;
@@ -371,84 +375,89 @@ function testSound() {
           เลือกรูปแบบสำเร็จรูป 5 แบบ (โครงสร้างต่างกันจริง ไม่ใช่แค่เปลี่ยนสี) หรือ "กำหนดเอง" เพื่อลาก-วางเองแบบอิสระ
         </div>
 
-        <div class="template-grid mb-3">
-          <button
-            v-for="tpl in CARD_TEMPLATES"
-            :key="tpl.id"
-            type="button"
-            class="template-option"
-            :class="{ active: form.cardTemplate === tpl.id }"
-            @click="form.cardTemplate = tpl.id"
-          >
-            <div class="template-thumb">
-              <div class="template-thumb-inner">
-                <component
-                  :is="templateComponentFor(tpl.id)"
-                  :result="PREVIEW_RESULT"
-                  :arrived="false"
-                  current-step-key="call"
-                  :displayed-ahead="PREVIEW_RESULT.aheadCount"
-                  formatted-wait="12 นาที"
-                  :arrived-title="form.arrivedTitle"
-                  :arrived-body="form.arrivedBody"
-                />
-              </div>
-            </div>
-            <div class="template-name">{{ tpl.label }}</div>
-          </button>
-
-          <button
-            type="button"
-            class="template-option"
-            :class="{ active: form.cardTemplate === 'custom' }"
-            @click="form.cardTemplate = 'custom'"
-          >
-            <div class="template-thumb">
-              <div class="template-thumb-inner">
-                <QueueStatusCard
-                  :result="PREVIEW_RESULT"
-                  :arrived="false"
-                  current-step-key="call"
-                  :displayed-ahead="PREVIEW_RESULT.aheadCount"
-                  formatted-wait="12 นาที"
-                  :arrived-title="form.arrivedTitle"
-                  :arrived-body="form.arrivedBody"
-                  :field-layout="fieldLayout"
-                />
-              </div>
-            </div>
-            <div class="template-name">กำหนดเอง</div>
-          </button>
-        </div>
-
-        <div class="text-caption text-medium-emphasis mb-4">
-          {{
-            form.cardTemplate === 'custom'
-              ? 'ลาก-วางเองอิสระทุกตำแหน่ง/สี/ขนาด — แก้ไขในการ์ด "จัดวางหน้าจอ" ด้านล่าง'
-              : CARD_TEMPLATES.find((t) => t.id === form.cardTemplate)?.description
-          }}
-        </div>
-
-        <template v-if="form.cardTemplate !== 'custom'">
-          <div class="d-flex justify-center mb-3">
-            <v-btn-toggle v-model="previewArrived" mandatory density="compact" color="primary" variant="outlined">
-              <v-btn :value="false" size="small">กำลังรอคิว</v-btn>
-              <v-btn :value="true" size="small">ถึงคิวแล้ว</v-btn>
-            </v-btn-toggle>
+        <div class="template-picker">
+          <div class="template-tabs">
+            <button
+              v-for="tpl in CARD_TEMPLATES"
+              :key="tpl.id"
+              type="button"
+              class="template-tab"
+              :class="{ active: form.cardTemplate === tpl.id }"
+              @click="form.cardTemplate = tpl.id"
+            >
+              {{ tpl.label }}
+            </button>
+            <button
+              type="button"
+              class="template-tab"
+              :class="{ active: form.cardTemplate === 'custom' }"
+              @click="form.cardTemplate = 'custom'"
+            >
+              กำหนดเอง
+            </button>
           </div>
-          <div class="mobile-frame mx-auto">
-            <component
-              :is="templateComponentFor(form.cardTemplate)"
-              :result="PREVIEW_RESULT"
-              :arrived="previewArrived"
-              current-step-key="call"
-              :displayed-ahead="PREVIEW_RESULT.aheadCount"
-              formatted-wait="12 นาที"
-              :arrived-title="form.arrivedTitle"
-              :arrived-body="form.arrivedBody"
-            />
+
+          <div class="template-preview-pane">
+            <div class="text-caption text-medium-emphasis mb-3">
+              {{
+                form.cardTemplate === 'custom'
+                  ? 'ลาก-วางเองอิสระทุกตำแหน่ง/สี/ขนาด — แก้ไขในการ์ด "จัดวางหน้าจอ" ด้านล่าง'
+                  : CARD_TEMPLATES.find((t) => t.id === form.cardTemplate)?.description
+              }}
+            </div>
+
+            <div v-if="form.cardTemplate !== 'custom'" class="d-flex flex-wrap ga-4 mb-3">
+              <v-switch
+                v-model="form.showPatientName"
+                label="แสดงชื่อคนไข้"
+                color="primary"
+                density="compact"
+                hide-details
+              />
+              <v-switch
+                v-model="form.showHn"
+                label="แสดง HN"
+                color="primary"
+                density="compact"
+                hide-details
+              />
+            </div>
+
+            <div class="d-flex justify-center mb-3">
+              <v-btn-toggle v-model="previewArrived" mandatory density="compact" color="primary" variant="outlined">
+                <v-btn :value="false" size="small">กำลังรอคิว</v-btn>
+                <v-btn :value="true" size="small">ถึงคิวแล้ว</v-btn>
+              </v-btn-toggle>
+            </div>
+
+            <div class="mobile-frame mx-auto">
+              <component
+                v-if="form.cardTemplate !== 'custom'"
+                :is="templateComponentFor(form.cardTemplate)"
+                :result="PREVIEW_RESULT"
+                :arrived="previewArrived"
+                current-step-key="call"
+                :displayed-ahead="PREVIEW_RESULT.aheadCount"
+                formatted-wait="12 นาที"
+                :arrived-title="form.arrivedTitle"
+                :arrived-body="form.arrivedBody"
+                :show-patient-name="form.showPatientName"
+                :show-hn="form.showHn"
+              />
+              <QueueStatusCard
+                v-else
+                :result="PREVIEW_RESULT"
+                :arrived="previewArrived"
+                current-step-key="call"
+                :displayed-ahead="PREVIEW_RESULT.aheadCount"
+                formatted-wait="12 นาที"
+                :arrived-title="form.arrivedTitle"
+                :arrived-body="form.arrivedBody"
+                :field-layout="fieldLayout"
+              />
+            </div>
           </div>
-        </template>
+        </div>
 
         <v-btn color="primary" size="large" block class="mt-4" :loading="saving" @click="save">
           บันทึกการตั้งค่า
@@ -674,8 +683,9 @@ function testSound() {
   width: 260px;
   max-width: 100%;
   /* Matches the real page's `v-card class="status-card pa-3"` (Vuetify pa-3 = 12px) so a fixed
-     preset template — several of which size/bleed elements assuming that padding exists (see
-     TemplateHero.vue's banner) — renders here exactly as it will for a real patient. */
+     preset template — every one of which bleeds its own background to the card edge via
+     `margin: -0.75rem` and assumes that padding exists — renders here exactly as it will for a
+     real patient. */
   padding: 12px;
   border: 8px solid var(--n-text);
   border-radius: var(--r-card-lg);
@@ -684,65 +694,83 @@ function testSound() {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
-.template-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-2);
+/* Side-by-side on desktop (tab list + a single pinned live preview) instead of the old grid of
+   11 simultaneously-live-rendered mini thumbnails — that grid was both the reason this section
+   scrolled on forever (list + a second full-size preview stacked below it) and, incidentally, the
+   exact shape that triggered the CSS-animation performance bug earlier today (many live templates
+   animating at once). Only ONE template ever renders now, whichever tab is selected. */
+.template-picker {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: flex-start;
 }
 
-.template-option {
+.template-tabs {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-1);
-  padding: var(--sp-1);
-  border: 2px solid var(--n-border);
-  border-radius: var(--r-control);
-  background: var(--n-card);
-  cursor: pointer;
+  gap: 2px;
+  flex: 0 0 172px;
+}
+
+.template-tab {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: transparent;
   font: inherit;
-  color: inherit;
-  text-align: center;
-  /* Without this, a grid item's default min-width:auto floors it at its content's min-content
-     width — and .template-thumb-inner's un-shrunk 250%-width content (the `transform: scale()`
-     trick below doesn't shrink layout size, only paint) counts as that content, so a template
-     with a long unbroken line was inflating its whole 1fr column past its siblings'. */
-  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--n-text-muted);
+  cursor: pointer;
 }
 
-.template-option:hover {
-  border-color: rgba(var(--v-theme-primary), 0.4);
-}
-
-.template-option.active {
-  border-color: rgb(var(--v-theme-primary));
+.template-tab:hover {
   background: rgba(var(--v-theme-primary), 0.05);
 }
 
-.template-thumb {
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-  border-radius: 6px;
-  background: var(--n-bg);
-  border: 1px solid var(--n-border);
-  position: relative;
-}
-
-/* Scale trick: render each template at a realistic ~350px width (250% of a ~140px thumb slot),
-   then shrink the whole thing down to fit — text wraps the same way it would on a real phone
-   instead of reflowing to fit a tiny box, so the thumbnail is an accurate mini version, not a
-   distorted one. */
-.template-thumb-inner {
-  width: 250%;
-  padding: 0.75rem;
-  transform: scale(0.4);
-  transform-origin: top left;
-  pointer-events: none;
-}
-
-.template-name {
-  font-size: var(--fs-xs);
+.template-tab.active {
+  border-left-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
   font-weight: var(--fw-medium);
+}
+
+.template-preview-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Stays in view while scrolling through the tab list above, as long as this whole section is
+     still on screen — the point of switching away from the old stacked layout. */
+  position: sticky;
+  top: var(--sp-4);
+}
+
+@media (max-width: 640px) {
+  .template-picker {
+    flex-direction: column;
+  }
+
+  .template-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: none;
+    gap: var(--sp-1);
+  }
+
+  .template-tab {
+    border-left: none;
+    border-radius: 999px;
+    border: 1.5px solid var(--n-border);
+  }
+
+  .template-tab.active {
+    border-color: rgb(var(--v-theme-primary));
+  }
+
+  .template-preview-pane {
+    position: static;
+    width: 100%;
+  }
 }
 
 .field-group {

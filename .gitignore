@@ -8,6 +8,7 @@ server/branches.json
 **/appsettings.Local.json
 **/*.user
 
+
 # Node / Vite
 client/node_modules/
 client/dist/

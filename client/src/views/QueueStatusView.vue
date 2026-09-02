@@ -300,6 +300,8 @@ onUnmounted(() => {
             :formatted-wait="formattedWait"
             :arrived-title="settings.arrivedTitle"
             :arrived-body="settings.arrivedBody"
+            :show-patient-name="settings.showPatientName"
+            :show-hn="settings.showHn"
           />
           <QueueStatusCard
             v-else

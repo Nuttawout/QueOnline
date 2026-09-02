@@ -23,6 +23,8 @@ export const settings = reactive({
   customSoundUrl: null,
   fieldLayout: { ...DEFAULT_FIELD_LAYOUT },
   cardTemplate: DEFAULT_CARD_TEMPLATE,
+  showPatientName: true,
+  showHn: true,
   loaded: false,
 });
 

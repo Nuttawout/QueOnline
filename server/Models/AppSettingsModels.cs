@@ -43,6 +43,21 @@ public sealed class AppSettingsRecord
     /// preset. Defaulting to a preset would silently replace their configured layout on
     /// deploy.</summary>
     public string CardTemplate { get; set; } = "custom";
+
+    /// <summary>2026-09-02: dead column. Was meant to pick a background treatment for the first
+    /// set of 10 fixed templates; that whole set (and the picker UI that wrote this) was replaced
+    /// the same day with a second, fully-composed set of 10 that none of it applies to. Left as-is
+    /// rather than migrated away — nothing reads or writes it anymore.</summary>
+    public string CardBackgroundStyle { get; set; } = "vivid";
+
+    /// <summary>Whether the 10 fixed templates show the patient's name / HN — independent toggles,
+    /// admin-configurable. Does NOT affect "custom" (the free-form layout already has its own
+    /// per-field visibility toggle in FieldLayoutJson). Default true for both: matches how most of
+    /// the 10 templates already behaved before this was a setting at all — this was added because
+    /// a few of them (added 2026-09-02) turned out to never show name/HN at all, an oversight, not
+    /// a deliberate design some hospital might already be relying on.</summary>
+    public bool ShowPatientName { get; set; } = true;
+    public bool ShowHn { get; set; } = true;
 }
 
 public sealed record UpdateSettingsRequest(
@@ -57,7 +72,10 @@ public sealed record UpdateSettingsRequest(
     string? FontSizeScale,
     string? SoundChoice,
     string? FieldLayoutJson = null,
-    string? CardTemplate = null
+    string? CardTemplate = null,
+    string? CardBackgroundStyle = null,
+    bool? ShowPatientName = null,
+    bool? ShowHn = null
 );
 
 public sealed record AdminLoginRequest(string Password);

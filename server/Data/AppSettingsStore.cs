@@ -94,6 +94,38 @@ public sealed class AppSettingsStore : IAppSettingsStore
         var command = connection.CreateCommand();
         command.CommandText = NewTableSql;
         await command.ExecuteNonQueryAsync();
+
+        // 2026-09-02: CardBackgroundStyle added after this table already held real branch data —
+        // ALTER TABLE ADD COLUMN (not a rebuild) is safe and sufficient here because it's a plain
+        // new nullable-with-default column, unlike the earlier BranchSlug primary-key change.
+        var hasBackgroundStyleColumn = connection.CreateCommand();
+        hasBackgroundStyleColumn.CommandText = "SELECT COUNT(*) FROM pragma_table_info('AppSettings') WHERE name = 'CardBackgroundStyle';";
+        var hasColumn = Convert.ToInt64(await hasBackgroundStyleColumn.ExecuteScalarAsync()) > 0;
+        if (!hasColumn)
+        {
+            var addColumn = connection.CreateCommand();
+            addColumn.CommandText = "ALTER TABLE AppSettings ADD COLUMN CardBackgroundStyle TEXT NOT NULL DEFAULT 'vivid';";
+            await addColumn.ExecuteNonQueryAsync();
+        }
+
+        // 2026-09-02: same ADD COLUMN pattern for the new name/HN visibility toggles.
+        var hasShowPatientNameColumn = connection.CreateCommand();
+        hasShowPatientNameColumn.CommandText = "SELECT COUNT(*) FROM pragma_table_info('AppSettings') WHERE name = 'ShowPatientName';";
+        if (Convert.ToInt64(await hasShowPatientNameColumn.ExecuteScalarAsync()) == 0)
+        {
+            var addColumn = connection.CreateCommand();
+            addColumn.CommandText = "ALTER TABLE AppSettings ADD COLUMN ShowPatientName INTEGER NOT NULL DEFAULT 1;";
+            await addColumn.ExecuteNonQueryAsync();
+        }
+
+        var hasShowHnColumn = connection.CreateCommand();
+        hasShowHnColumn.CommandText = "SELECT COUNT(*) FROM pragma_table_info('AppSettings') WHERE name = 'ShowHn';";
+        if (Convert.ToInt64(await hasShowHnColumn.ExecuteScalarAsync()) == 0)
+        {
+            var addColumn = connection.CreateCommand();
+            addColumn.CommandText = "ALTER TABLE AppSettings ADD COLUMN ShowHn INTEGER NOT NULL DEFAULT 1;";
+            await addColumn.ExecuteNonQueryAsync();
+        }
     }
 
     private const string NewTableSql = """
@@ -112,7 +144,10 @@ public sealed class AppSettingsStore : IAppSettingsStore
             CustomSoundUrl TEXT NULL,
             AccentColor TEXT NOT NULL DEFAULT '#e8720f',
             FieldLayoutJson TEXT NULL,
-            CardTemplate TEXT NOT NULL DEFAULT 'custom'
+            CardTemplate TEXT NOT NULL DEFAULT 'custom',
+            CardBackgroundStyle TEXT NOT NULL DEFAULT 'vivid',
+            ShowPatientName INTEGER NOT NULL DEFAULT 1,
+            ShowHn INTEGER NOT NULL DEFAULT 1
         );
         """;
 
@@ -124,7 +159,7 @@ public sealed class AppSettingsStore : IAppSettingsStore
         await connection.OpenAsync(ct);
         var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT HospitalName, Tagline, Greeting, ArrivedTitle, ArrivedBody, PrimaryColor, SoundChoice, LogoUrl, FontFamily, FontSizeScale, CustomSoundUrl, AccentColor, FieldLayoutJson, CardTemplate
+            SELECT HospitalName, Tagline, Greeting, ArrivedTitle, ArrivedBody, PrimaryColor, SoundChoice, LogoUrl, FontFamily, FontSizeScale, CustomSoundUrl, AccentColor, FieldLayoutJson, CardTemplate, CardBackgroundStyle, ShowPatientName, ShowHn
             FROM AppSettings WHERE BranchSlug = $branchSlug;
             """;
         command.Parameters.AddWithValue("$branchSlug", branchSlug);
@@ -151,6 +186,9 @@ public sealed class AppSettingsStore : IAppSettingsStore
             AccentColor = reader.GetString(11),
             FieldLayoutJson = reader.IsDBNull(12) ? null : reader.GetString(12),
             CardTemplate = reader.GetString(13),
+            CardBackgroundStyle = reader.GetString(14),
+            ShowPatientName = reader.GetInt64(15) != 0,
+            ShowHn = reader.GetInt64(16) != 0,
         };
     }
 
@@ -163,8 +201,8 @@ public sealed class AppSettingsStore : IAppSettingsStore
         await connection.OpenAsync(ct);
         var command = connection.CreateCommand();
         command.CommandText = """
-            INSERT OR IGNORE INTO AppSettings (BranchSlug, HospitalName, Tagline, Greeting, ArrivedTitle, ArrivedBody, PrimaryColor, AccentColor, SoundChoice, LogoUrl, FontFamily, FontSizeScale, CustomSoundUrl, CardTemplate)
-            VALUES ($branchSlug, $hospitalName, $tagline, $greeting, $arrivedTitle, $arrivedBody, $primaryColor, $accentColor, $soundChoice, NULL, $fontFamily, $fontSizeScale, NULL, $cardTemplate);
+            INSERT OR IGNORE INTO AppSettings (BranchSlug, HospitalName, Tagline, Greeting, ArrivedTitle, ArrivedBody, PrimaryColor, AccentColor, SoundChoice, LogoUrl, FontFamily, FontSizeScale, CustomSoundUrl, CardTemplate, CardBackgroundStyle, ShowPatientName, ShowHn)
+            VALUES ($branchSlug, $hospitalName, $tagline, $greeting, $arrivedTitle, $arrivedBody, $primaryColor, $accentColor, $soundChoice, NULL, $fontFamily, $fontSizeScale, NULL, $cardTemplate, $cardBackgroundStyle, $showPatientName, $showHn);
             """;
         command.Parameters.AddWithValue("$branchSlug", branchSlug);
         command.Parameters.AddWithValue("$hospitalName", defaults.HospitalName);
@@ -178,6 +216,9 @@ public sealed class AppSettingsStore : IAppSettingsStore
         command.Parameters.AddWithValue("$fontFamily", defaults.FontFamily);
         command.Parameters.AddWithValue("$fontSizeScale", defaults.FontSizeScale);
         command.Parameters.AddWithValue("$cardTemplate", defaults.CardTemplate);
+        command.Parameters.AddWithValue("$cardBackgroundStyle", defaults.CardBackgroundStyle);
+        command.Parameters.AddWithValue("$showPatientName", defaults.ShowPatientName ? 1 : 0);
+        command.Parameters.AddWithValue("$showHn", defaults.ShowHn ? 1 : 0);
         await command.ExecuteNonQueryAsync(ct);
     }
 
@@ -201,7 +242,10 @@ public sealed class AppSettingsStore : IAppSettingsStore
                 FontFamily = $fontFamily,
                 FontSizeScale = $fontSizeScale,
                 FieldLayoutJson = $fieldLayoutJson,
-                CardTemplate = $cardTemplate
+                CardTemplate = $cardTemplate,
+                CardBackgroundStyle = $cardBackgroundStyle,
+                ShowPatientName = $showPatientName,
+                ShowHn = $showHn
             WHERE BranchSlug = $branchSlug;
             """;
         command.Parameters.AddWithValue("$branchSlug", branchSlug);
@@ -217,6 +261,9 @@ public sealed class AppSettingsStore : IAppSettingsStore
         command.Parameters.AddWithValue("$fontSizeScale", request.FontSizeScale ?? current.FontSizeScale);
         command.Parameters.AddWithValue("$fieldLayoutJson", (object?)(request.FieldLayoutJson ?? current.FieldLayoutJson) ?? DBNull.Value);
         command.Parameters.AddWithValue("$cardTemplate", request.CardTemplate ?? current.CardTemplate);
+        command.Parameters.AddWithValue("$cardBackgroundStyle", request.CardBackgroundStyle ?? current.CardBackgroundStyle);
+        command.Parameters.AddWithValue("$showPatientName", (request.ShowPatientName ?? current.ShowPatientName) ? 1 : 0);
+        command.Parameters.AddWithValue("$showHn", (request.ShowHn ?? current.ShowHn) ? 1 : 0);
         await command.ExecuteNonQueryAsync(ct);
     }
 

@@ -2,17 +2,24 @@
 // layout (not just a recolor), picked as a whole via `settings.cardTemplate`. "custom" is NOT one
 // of these; it's the pre-existing free-form drag-and-drop system (QueueStatusCard.vue +
 // fieldLayout.js) and stays a separate top-level choice in the admin picker.
+//
+// 2026-09-02: this is the SECOND full set of 10 — replaced the original set entirely per the
+// user's explicit request ("เอาทั้ง 10 นี้มาแทนของเดิมทั้งหมดเลยครับ ผมชอบทุกอันเลย") after seeing a
+// gallery of 10 real-world-referenced directions and liking all of them. Each id here is new and
+// does not match any of the old set's ids — see log/2026-09-02.md for the full list of what a
+// hospital that already had one of the old ids saved will fall back to (the "custom" free-form
+// layout, per QueueStatusView.vue's existing unmatched-id fallback — not a crash).
 export const CARD_TEMPLATES = [
-  { id: 'classic', label: 'ทางการ', description: 'ไทม์ไลน์แนวตั้ง การ์ดเดียวจบ — อ่านง่าย เป็นทางการ' },
-  { id: 'ticket', label: 'ตั๋วคิว', description: 'สไตล์ตั๋วโดยสาร ฉีกครึ่ง เลขคิวเด่นด้านซ้าย' },
-  { id: 'hero', label: 'แบนเนอร์เด่น', description: 'แถบสีพื้นหลังเต็ม เลขคิวใหญ่ที่สุด เห็นชัดจากระยะไกล' },
-  { id: 'dashboard', label: 'แดชบอร์ด', description: 'กระชับ แบบ tile สรุปข้อมูล เห็นครบในแวบเดียว' },
-  { id: 'timelineFocus', label: 'เน้นไทม์ไลน์', description: 'พื้นที่ส่วนใหญ่ของการ์ดเน้นที่ขั้นตอน เห็นว่าอยู่จุดไหนชัดเจน' },
-  { id: 'gradient', label: 'ไล่เฉดสี', description: 'พื้นหลังไล่เฉดสีธีมทั้งการ์ด แผงข้อมูลสีขาวลอยตรงกลาง สดใสมองเห็นง่าย' },
-  { id: 'duoSplit', label: 'แบ่งครึ่งสี', description: 'แถบสีทึบด้านซ้ายเต็มความสูง คู่กับเนื้อหาสีขาวด้านขวา ตัดกันชัดเจน' },
-  { id: 'glow', label: 'กรอบเรืองแสง', description: 'การ์ดเรียบสีขาว ล้อมกรอบด้วยเส้นไล่เฉดสีธีม + แสงเรืองรอบการ์ด' },
-  { id: 'bubble', label: 'นุ่มนวล', description: 'โทนสีพาสเทลอ่อนละมุน ทุกอย่างโค้งมนเป็นแคปซูล เป็นมิตร' },
-  { id: 'dark', label: 'ธีมมืด', description: 'พื้นหลังเข้ม ตัวอักษร/สีเน้นตัดกันสว่างชัด เด่นในที่แสงจ้าหรือกลางคืน' },
+  { id: 'boardingPass', label: 'บัตรผ่านขึ้นเครื่อง', description: 'แถบกรมท่าเข้ม รอยปรุ บาร์โค้ด — ทางการ น่าเชื่อถือ แบบตั๋วเครื่องบิน' },
+  { id: 'tracking', label: 'ติดตามสถานะ', description: 'วงแหวนความคืบหน้า ป้ายไลฟ์กะพริบ ไทม์ไลน์แนวตั้ง — อบอุ่นแบบแอปเดลิเวอรี' },
+  { id: 'board', label: 'จอบอร์ดแสดงคิว', description: 'พื้นเข้ม ตัวเลขยักษ์ อ่านชัดจากระยะไกล — แบบจอคิวธนาคาร/ป้ายเที่ยวบิน' },
+  { id: 'healthRings', label: 'นาฬิกาสุขภาพ', description: 'พื้นดำ วงแหวนหลายชั้น กระชับที่สุด — แบบหน้าปัด Apple Watch' },
+  { id: 'restaurant', label: 'คิวร้านอาหาร', description: 'โทนอุ่น การ์ดลอยเหนือแถบสี ตัวเลขกลมมน — แบบแอปจองร้านอาหาร' },
+  { id: 'official', label: 'เอกสารราชการ', description: 'กระดาษ ตราวงกลม ตารางแบบหนังสือราชการ — เป็นทางการที่สุด' },
+  { id: 'ecommerce', label: 'ติดตามพัสดุ', description: 'ไล่เฉดส้ม-แดง สเต็ปเปอร์ไอคอนกลม — คุ้นตาแบบแอปช้อปปิ้ง' },
+  { id: 'swiss', label: 'มินิมอลสวิส', description: 'ขาวดำ เส้นบาง ตัวเลขจัดคอลัมน์ — พรีเมียม สงบ ไม่รกตา' },
+  { id: 'neumorphic', label: 'ปุ่มนูนนีโอมอร์ฟิก', description: 'โทนเดียวทั้งจอ เงานูน-เงาบุ๋มแทนเส้นขอบ — นุ่มนวลจับต้องได้' },
+  { id: 'cinema', label: 'ตั๋วหนัง', description: 'ม่วง-ชมพูนีออน ขอบฉีกซิกแซก — สนุกมีชีวิตชีวาที่สุด' },
 ];
 
 // NOT a preset id — matches the server default (see AppSettingsModels.cs CardTemplate doc): the

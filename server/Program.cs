@@ -44,10 +44,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(ClientCorsPolicy, policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? ["http://localhost:5173"];
-
-        policy.WithOrigins(allowedOrigins)
+        // Reads Cors:AllowedOrigins fresh on every request (via SetIsOriginAllowed) rather than
+        // once at startup — appsettings.json's reloadOnChange means editing the list takes effect
+        // immediately, no server restart needed, same as SuperAdmin:Password already behaves.
+        policy.SetIsOriginAllowed(origin =>
+        {
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? ["http://localhost:5173"];
+            return allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
+        })
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
