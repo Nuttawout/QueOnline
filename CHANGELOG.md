@@ -10,7 +10,11 @@
   ทำเมื่อเช้าทิ้ง (ซ้ำซ้อนกับดีไซน์ใหม่) — ก่อนหน้านั้น: รีดีไซน์ชุดเดิม (เจอบั๊กจริงเรื่อง CSS blur-property ทำ
   หน้า Admin ค้าง แก้แล้ว) + เปลี่ยนฟอร์ม Super Admin เป็นฟิลด์แยก (Server/Database/Login/Password/Transfer
   Mode) — ค้าง: ยังไม่ได้กรอกข้อมูลจริงของสาขาไหนเลย, สาขาที่เคยตั้ง CardTemplate เป็น id เก่าจะ fallback เป็น
-  "กำหนดเอง" ต้องไปเลือกใหม่เอง, ยังไม่ได้ deploy รอบใหม่ขึ้น Cloudflare Pages
+  "กำหนดเอง" ต้องไปเลือกใหม่เอง — **+ ย้ายจาก Cloudflare Quick Tunnel (ชั่วคราว, หลุดจริงระหว่างวัน) เป็น Named
+  Tunnel ถาวรบนโดเมนจริง `queue.smartaspd.com`** ผ่าน Zero Trust dashboard (connector รันเป็น Windows Service)
+  + user เพิ่ม custom domain `queonline.smartaspd.com` ให้ Cloudflare Pages เอง เจอบั๊กจริง (CORS ไม่ได้อนุญาต
+  origin ใหม่ ทั้งที่ API/หน้าเว็บโหลดได้ปกติ) แก้แล้วมีผลทันทีไม่ต้อง restart — ค้าง: ยังไม่ได้พิสูจน์ connector
+  auto-start ตอนเครื่องบูตจริง, ยังไม่ได้ทดสอบ deep-link/push ผ่านโดเมนใหม่
 - [2026-09-01](log/2026-09-01.md) — **รองรับหลายสาขา (multi-branch)**: deployment กลางเดียวรองรับ 10-20
   โรงพยาบาลแยกฐานข้อมูล/admin password ต่อสาขา, เลือกสาขาผ่าน URL (`/{slug}`), token ผูกสาขา (ทดสอบ replay
   ข้ามสาขา → 401 ผ่าน), แก้ migration ที่เกือบทำข้อมูลแบรนด์จริงของ Vibharam หายตอนเปลี่ยน schema **+ เพิ่มหน้า
