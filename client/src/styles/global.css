@@ -1,0 +1,33 @@
+@import './tokens.css';
+
+:root {
+  --font-thai: 'Anuphan', system-ui, sans-serif;
+}
+
+body,
+.v-application {
+  font-family: var(--font-thai) !important;
+  background: var(--n-bg);
+}
+
+/* Press-scale micro-interaction (design-token spec, 2026-08-31): every button settles down to
+   0.97 on press and springs back on release, using the shared spring easing. */
+.v-btn {
+  transition: transform var(--dur) var(--ease-spring) !important;
+  border-radius: var(--r-control) !important;
+}
+
+.v-btn:active {
+  transform: scale(0.97);
+}
+
+/* Radius scale: controls (buttons/inputs) 12px, cards 16-20px — applied globally so every screen
+   picks up the same discipline by default; a component can still override with a more specific
+   selector where it deliberately needs a different value (e.g. the queue-status "hero" card). */
+.v-field {
+  border-radius: var(--r-control) !important;
+}
+
+.v-card {
+  border-radius: var(--r-card);
+}
