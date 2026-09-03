@@ -27,6 +27,32 @@ export function stageWaitText(step) {
   return `อีก ${step.aheadCount} คิว${waitPart}`;
 }
 
+const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const THAI_MONTHS = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+];
+
+/** "วันพุธที่ 3 เดือน กันยายน พ.ศ. 2569" — full Thai date with weekday + Buddhist-era year, spelled
+ * out by hand (not Intl.DateTimeFormat) so the wording matches exactly what was asked for instead
+ * of whatever shorthand th-TH locale formatting happens to produce. */
+export function formatVisitDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const weekday = THAI_WEEKDAYS[d.getDay()];
+  const month = THAI_MONTHS[d.getMonth()];
+  const buddhistYear = d.getFullYear() + 543;
+  return `วัน${weekday}ที่ ${d.getDate()} เดือน ${month} พ.ศ. ${buddhistYear}`;
+}
+
+/** The visit date shown on every template ("วันที่มารับบริการ") — taken from the timeline's
+ * "register" step, which is always populated (see BuildTimeline server-side: qdatetime is the
+ * queue row's creation timestamp, never null) rather than a separate field re-fetched per template. */
+export function visitDateText(result) {
+  const at = result?.timeline?.find((s) => s.key === 'register')?.at;
+  return formatVisitDate(at);
+}
+
 /** "ชื่อ · HN 123456" (or just one half, or '') — every one of the 10 fixed templates' single rule
  * for whether/how to show the patient's name and HN, driven by the admin-configurable
  * settings.showPatientName/showHn toggles (2026-09-02: added after a real gap — several templates

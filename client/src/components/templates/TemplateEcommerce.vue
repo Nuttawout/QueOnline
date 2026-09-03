@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -17,6 +18,10 @@ const props = defineProps({
 const visibleSteps = () => props.result.timeline ?? [];
 const currentStep = () => visibleSteps().find((s) => s.key === props.currentStepKey);
 const patientLine = computed(() => patientLineText(props.result, props.showPatientName, props.showHn));
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -25,6 +30,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
       <div class="top"><span>{{ result.departmentName ?? result.groupName ?? '—' }}</span><span>{{ arrived ? 'ถึงคิวแล้ว' : 'กำลังดำเนินการ' }}</span></div>
       <div class="n">{{ result.qNumber }}</div>
       <div class="s">คิวของท่าน{{ patientLine ? ` · ${patientLine}` : '' }}</div>
+      <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
     </div>
 
     <div class="stepper">
@@ -97,6 +103,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
 .top { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-sm); font-weight: 500; opacity: 0.9; }
 .n { font-family: 'Kanit', sans-serif; font-weight: 700; font-size: 64px; line-height: 1.05; margin-top: var(--sp-2); }
 .s { font-size: var(--fs-sm); opacity: 0.9; margin-top: 2px; }
+.meta-time { font-size: var(--fs-xs); opacity: 0.8; margin-top: 6px; font-variant-numeric: tabular-nums; }
 
 .stepper { display: flex; margin: -22px var(--sp-4) 0; background: #fff; border-radius: 18px; padding: var(--sp-4) var(--sp-2); box-shadow: 0 10px 22px -12px rgba(238, 43, 71, 0.35); }
 .gs { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }

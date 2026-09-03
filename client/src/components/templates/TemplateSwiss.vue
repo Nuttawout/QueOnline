@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -16,6 +17,10 @@ const props = defineProps({
 
 const patientLine = computed(() => patientLineText(props.result, props.showPatientName, props.showHn));
 
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
+
 const visibleSteps = () => props.result.timeline ?? [];
 function stepTime(step) {
   if (step.done && step.at) return formatStepTime(step.at);
@@ -30,6 +35,7 @@ function stepTime(step) {
     <div class="eyebrow"><span>{{ result.departmentName ?? result.groupName ?? '—' }}</span><span>{{ result.visitNumber ? `เลขที่ ${result.visitNumber}` : '' }}</span></div>
     <div class="num">{{ result.qNumber }}</div>
     <div v-if="patientLine" class="name">{{ patientLine }}</div>
+    <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
 
     <div class="grid">
       <div class="cell">
@@ -79,7 +85,8 @@ function stepTime(step) {
 
 .eyebrow { font-size: var(--fs-sm); letter-spacing: 0.1em; text-transform: uppercase; color: #6b6d73; border-bottom: 1px solid #0e0f12; padding-bottom: var(--sp-3); display: flex; justify-content: space-between; }
 .num { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: 112px; line-height: 0.9; margin: var(--sp-4) 0 4px; letter-spacing: -0.02em; }
-.name { font-size: var(--fs-sm); color: #6b6d73; margin-bottom: var(--sp-5); }
+.name { font-size: var(--fs-sm); color: #6b6d73; margin-bottom: 4px; }
+.meta-time { font-size: var(--fs-xs); color: #8a8c92; margin-bottom: var(--sp-5); font-variant-numeric: tabular-nums; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; }
 .cell { border-top: 1px solid #d8d9dd; padding: var(--sp-3) 0; }

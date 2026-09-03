@@ -7,6 +7,7 @@ import { useQueueAlert } from '../composables/useQueueAlert';
 import { usePushSubscription } from '../composables/usePushSubscription';
 import { settings } from '../composables/useSettings';
 import QueueStatusCard from '../components/QueueStatusCard.vue';
+import QrScanDialog from '../components/QrScanDialog.vue';
 import { TEMPLATE_COMPONENTS } from '../components/templates/registry';
 import { formatWaitMinutes } from '../utils/queueFormat';
 
@@ -171,6 +172,33 @@ function search() {
   runLookup({ qnumber: entryNumber.value.trim() });
 }
 
+const showScanDialog = ref(false);
+
+// The physical ticket printer isn't wired to this app (see README's "เข้าคิวตรงผ่าน QR code" section)
+// so its QR may already encode a deep-link URL (?q=/&hn=) if a branch set it up that way, or — the
+// common case today — just the bare queue number/HN text. Support both instead of assuming one.
+function parseScannedText(text) {
+  const trimmed = text.trim();
+  try {
+    const url = new URL(trimmed);
+    const q = url.searchParams.get('q');
+    const hn = url.searchParams.get('hn');
+    if (q || hn) return { qnumber: q ?? undefined, hn: hn ?? undefined };
+  } catch {
+    // Not a URL — fall through to treating it as a raw queue number/HN below.
+  }
+  return { qnumber: trimmed };
+}
+
+function onQrDetected(text) {
+  vibrateTap();
+  const { qnumber, hn } = parseScannedText(text);
+  entryNumber.value = qnumber ?? '';
+  queryHn = hn;
+  resetAlert();
+  runLookup({ qnumber, hn });
+}
+
 async function refresh() {
   if (!result.value) return;
   try {
@@ -256,11 +284,13 @@ onUnmounted(() => {
 
       <!-- Entry screen -->
       <v-card v-else-if="mode === 'entry'" key="entry" class="pa-6 entry-card" elevation="6">
-        <div class="text-center mb-3">
-          <v-icon icon="mdi-hand-wave-outline" color="primary" size="32" class="mb-1 wave-icon" />
+        <div class="text-center mb-4">
+          <div class="wave-badge mb-2">
+            <v-icon icon="mdi-hand-wave-outline" color="white" size="30" class="wave-icon" />
+          </div>
           <div class="text-caption text-medium-emphasis time-greeting">{{ timeGreeting }} • {{ formattedTime }} น.</div>
           <div class="text-h6 font-weight-medium greeting-text">{{ settings.greeting }}</div>
-          <div class="text-body-2 text-medium-emphasis mt-1">กรอกหมายเลขคิวของท่านเพื่อดูสถานะ</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">กรอกหมายเลขคิวของท่าน หรือสแกน QR บนบัตรคิว</div>
         </div>
 
         <v-form @submit.prevent="search">
@@ -278,6 +308,24 @@ onUnmounted(() => {
             ดูสถานะคิวของฉัน
           </v-btn>
         </v-form>
+
+        <div class="or-divider">
+          <v-divider />
+          <span class="text-caption text-medium-emphasis px-3">หรือ</span>
+          <v-divider />
+        </div>
+
+        <v-btn
+          variant="tonal"
+          color="primary"
+          size="large"
+          block
+          rounded="lg"
+          prepend-icon="mdi-qrcode-scan"
+          @click="showScanDialog = true"
+        >
+          สแกน QR คิวของท่าน
+        </v-btn>
 
         <v-alert v-if="notFound" type="warning" variant="tonal" density="compact" class="mt-3">
           ไม่พบหมายเลขคิวนี้ในระบบวันนี้ กรุณาตรวจสอบอีกครั้ง
@@ -360,15 +408,39 @@ onUnmounted(() => {
         <v-btn variant="text" size="small" @click="showAlertToast = false">ปิด</v-btn>
       </template>
     </v-snackbar>
+
+    <QrScanDialog v-model="showScanDialog" @detected="onQrDetected" />
   </div>
 </template>
 
 <style scoped>
 .hero {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--n-bg);
+  overflow: hidden;
+}
+
+/* Soft brand-colored wash behind the header/card, contained to the top of the screen so it
+   reads as an ambient backdrop rather than competing with the card's own elevation/shadow. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 380px;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(var(--v-theme-primary), 0.14), transparent 60%),
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--accent-color) 16%, transparent), transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.brand-bar,
+.content-container {
+  position: relative;
+  z-index: 1;
 }
 
 .brand-bar {
@@ -378,8 +450,6 @@ onUnmounted(() => {
   max-width: 480px;
   width: 100%;
   margin: 0 auto;
-  background: var(--n-card);
-  border-bottom: 1px solid var(--n-border);
   flex-shrink: 0;
 }
 
@@ -408,6 +478,24 @@ onUnmounted(() => {
 .entry-card,
 .status-card {
   border-radius: var(--r-card);
+}
+
+.wave-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)), var(--accent-color));
+  box-shadow: 0 8px 20px -6px rgba(var(--v-theme-primary), 0.5);
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  margin: var(--sp-4) 0;
 }
 
 .queue-input :deep(input) {

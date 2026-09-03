@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -17,6 +18,10 @@ const props = defineProps({
 const visibleSteps = () => props.result.timeline ?? [];
 const currentStep = () => visibleSteps().find((s) => s.key === props.currentStepKey);
 const patientLine = computed(() => patientLineText(props.result, props.showPatientName, props.showHn));
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -33,6 +38,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
         </div>
       </div>
       <div v-if="patientLine" class="patient">{{ patientLine }}</div>
+      <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
     </div>
 
     <div class="perf"></div>
@@ -151,6 +157,14 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
   margin-top: var(--sp-2);
   font-size: var(--fs-sm);
   color: #c3ceea;
+}
+
+.meta-time {
+  margin-top: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: #7f93bd;
+  font-variant-numeric: tabular-nums;
 }
 
 .perf {

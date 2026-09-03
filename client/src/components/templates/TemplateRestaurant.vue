@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -17,6 +18,10 @@ const props = defineProps({
 const visibleSteps = () => props.result.timeline ?? [];
 const currentStep = () => visibleSteps().find((s) => s.key === props.currentStepKey);
 const patientLine = computed(() => patientLineText(props.result, props.showPatientName, props.showHn));
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -31,6 +36,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
       <div class="num-lbl">หมายเลขคิว</div>
       <div class="num">{{ result.qNumber }}</div>
       <div v-if="patientLine" class="name">{{ patientLine }}</div>
+      <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
 
       <template v-if="arrived">
         <div class="arrived">
@@ -93,6 +99,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
 .num-lbl { font-size: var(--fs-sm); color: #a3866f; }
 .num { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 76px; color: #b5442e; line-height: 1.1; }
 .name { font-size: var(--fs-sm); color: #6b5443; margin-top: var(--sp-1); }
+.meta-time { font-size: var(--fs-xs); color: #a3866f; margin-top: 3px; font-variant-numeric: tabular-nums; }
 
 .arrived { padding: var(--sp-3) 0; }
 .badge { font-size: 2.2rem; animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }

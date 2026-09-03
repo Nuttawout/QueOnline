@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -24,12 +25,17 @@ const innerFrac = computed(() => {
 });
 const OUTER_C = 276.5;
 const INNER_C = 207.3;
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
   <div class="tpl-rings">
     <div class="brand">{{ result.departmentName ?? result.groupName ?? '—' }}</div>
     <div v-if="patientLine" class="patient-line">{{ patientLine }}</div>
+    <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
     <div class="rings">
       <svg viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="44" fill="none" stroke="#1c1d21" stroke-width="7" />
@@ -100,6 +106,7 @@ const INNER_C = 207.3;
 
 .brand { font-size: var(--fs-sm); color: #7c7f87; font-weight: 700; letter-spacing: 0.06em; }
 .patient-line { font-size: var(--fs-sm); color: #b8bcc4; margin-top: -8px; }
+.meta-time { font-size: var(--fs-xs); color: #7c7f87; font-variant-numeric: tabular-nums; text-align: center; }
 
 .rings { position: relative; width: 208px; height: 208px; margin: 4px 0; }
 .rings svg { width: 100%; height: 100%; transform: rotate(-90deg); }

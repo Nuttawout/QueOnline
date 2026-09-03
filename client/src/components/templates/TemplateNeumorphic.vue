@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -17,6 +18,10 @@ const props = defineProps({
 const visibleSteps = () => props.result.timeline ?? [];
 const currentStep = () => visibleSteps().find((s) => s.key === props.currentStepKey);
 const patientLine = computed(() => patientLineText(props.result, props.showPatientName, props.showHn));
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -26,6 +31,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
       <span class="l">คิวของท่าน</span>
     </div>
     <div v-if="patientLine" class="patient-line">{{ patientLine }}</div>
+    <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
 
     <div class="row">
       <template v-if="arrived">
@@ -86,6 +92,7 @@ const patientLine = computed(() => patientLineText(props.result, props.showPatie
 .badge .n { font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 58px; color: #3548e0; }
 .badge .l { font-size: var(--fs-sm); color: #7b8196; margin-top: 2px; }
 .patient-line { font-size: var(--fs-sm); color: #7b8196; margin-top: -8px; }
+.meta-time { font-size: var(--fs-xs); color: #7b8196; font-variant-numeric: tabular-nums; text-align: center; }
 
 .row { display: flex; gap: var(--sp-3); width: 100%; }
 .pill { flex: 1; background: #e4e8f2; border-radius: 18px; padding: var(--sp-3); text-align: center; box-shadow: 6px 6px 12px #b9bdcb, -6px -6px 12px #ffffff; }

@@ -1,5 +1,7 @@
 <script setup>
-import { formatStepTime } from '../../utils/queueFormat';
+import { computed } from 'vue';
+import { formatStepTime, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -20,6 +22,10 @@ function statusText(step) {
   if (step.key === props.currentStepKey) return props.arrived ? 'เสร็จสิ้น' : 'กำลังดำเนินการ';
   return 'รอดำเนินการ';
 }
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -31,6 +37,8 @@ function statusText(step) {
 
     <table class="table">
       <tbody>
+        <tr><td>วันที่มารับบริการ</td><td>{{ visitDate }}</td></tr>
+        <tr><td>เวลาปัจจุบัน</td><td class="clock">{{ liveTimeText }} น.</td></tr>
         <tr v-if="showPatientName"><td>ชื่อผู้ป่วย</td><td>{{ result.patientName ?? '—' }}</td></tr>
         <tr v-if="showHn && result.hn"><td>เลขประจำตัวผู้ป่วย (HN)</td><td>{{ result.hn }}</td></tr>
         <tr><td>คิวที่กำลังให้บริการ</td><td>{{ result.currentServingNumber ?? '—' }}</td></tr>
@@ -85,6 +93,7 @@ function statusText(step) {
 .table td { padding: var(--sp-2) 4px; border-bottom: 1px dotted #cbd0da; }
 .table td:first-child { color: #6b7280; width: 45%; }
 .table td:last-child { font-weight: 700; text-align: right; }
+.table td.clock { font-variant-numeric: tabular-nums; }
 
 .num-row { text-align: center; margin: var(--sp-5) 0; padding: var(--sp-4); border: 1.5px solid #a6822e; border-radius: 4px; }
 .num-row .l { font-size: var(--fs-sm); color: #8a6f24; letter-spacing: 0.08em; }

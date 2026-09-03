@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { formatStepTime, patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { formatStepTime, patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -21,6 +22,10 @@ const progressPct = computed(() => (steps.value.length ? resolvedCount.value / s
 const CIRCUMFERENCE = 276.5;
 const dashOffset = computed(() => CIRCUMFERENCE * (1 - progressPct.value));
 const currentStep = computed(() => steps.value.find((s) => s.key === props.currentStepKey));
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -34,6 +39,7 @@ const currentStep = computed(() => steps.value.find((s) => s.key === props.curre
     </div>
 
     <div v-if="patientLine" class="patient-line">{{ patientLine }}</div>
+    <div class="meta-time">{{ visitDate }} เวลา {{ liveTimeText }} น.</div>
 
     <div class="pill" :class="{ 'pill-done': arrived }">
       <span class="pulse"></span>
@@ -106,6 +112,7 @@ const currentStep = computed(() => steps.value.find((s) => s.key === props.curre
 .hospital small { display: block; font-size: var(--fs-xs); color: #8992a6; font-weight: 400; }
 
 .patient-line { font-size: var(--fs-sm); color: #5c6773; }
+.meta-time { font-size: var(--fs-xs); color: #8992a6; font-variant-numeric: tabular-nums; }
 
 .pill {
   align-self: flex-start;

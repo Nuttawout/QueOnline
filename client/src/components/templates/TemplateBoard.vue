@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { patientLineText, stageWaitText } from '../../utils/queueFormat';
+import { patientLineText, stageWaitText, visitDateText } from '../../utils/queueFormat';
+import { useLiveClock } from '../../composables/useLiveClock';
 
 const props = defineProps({
   result: { type: Object, required: true },
@@ -25,6 +26,10 @@ const statusLine = computed(() => {
   return step.location ? `${step.label} ${step.location}` + (wait ? ` — ${wait}` : '') : step.label + (wait ? ` — ${wait}` : '');
 });
 function arrivedBody() { return props.arrivedBody; }
+
+const liveNow = useLiveClock();
+const liveTimeText = computed(() => liveNow.value.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const visitDate = computed(() => visitDateText(props.result));
 </script>
 
 <template>
@@ -33,6 +38,7 @@ function arrivedBody() { return props.arrivedBody; }
       <span>{{ result.departmentName ?? result.groupName ?? '—' }}</span>
       <span class="now">NOW SERVING <b>{{ result.currentServingNumber ?? '—' }}</b></span>
     </div>
+    <div class="datetime">{{ visitDate }} <span class="clock">เวลา {{ liveTimeText }} น.</span></div>
 
     <div class="hero">
       <div class="lbl">หมายเลขคิวของท่าน</div>
@@ -100,6 +106,13 @@ function arrivedBody() { return props.arrivedBody; }
   color: #d99a3a; margin-bottom: var(--sp-4);
 }
 .row-top .now b { color: #f2e9d8; font-size: var(--fs-base); letter-spacing: 0; margin-left: 6px; }
+
+.datetime {
+  text-align: center;
+  font-family: 'Chakra Petch', sans-serif; font-size: var(--fs-xs); color: #6b7280;
+  letter-spacing: 0.04em; line-height: 1.5; padding-bottom: var(--sp-2); border-bottom: 1px solid #23262d;
+}
+.datetime .clock { color: #d99a3a; font-variant-numeric: tabular-nums; font-weight: 600; }
 
 .hero { text-align: center; padding: var(--sp-1) 0 var(--sp-3); }
 .hero .lbl { font-size: var(--fs-sm); letter-spacing: 0.14em; text-transform: uppercase; color: #8b8f98; margin-bottom: 6px; }
