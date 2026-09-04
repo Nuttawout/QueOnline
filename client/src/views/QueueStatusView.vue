@@ -64,7 +64,18 @@ watch(lastAlert, (val) => {
 // feature existed; any recognized preset id renders that fixed-design component instead.
 const activeTemplateComponent = computed(() => TEMPLATE_COMPONENTS[settings.cardTemplate] ?? null);
 
-const arrived = computed(() => result.value?.timeline?.find((s) => s.key === 'call')?.done ?? false);
+// "ถึงคิวของท่านแล้ว" is meant as a fresh "you were just called into the exam room, go now" alert —
+// not a permanent state. Real Queue_q data (2026-09-04 bug report) shows call.done stays true for
+// the rest of the visit, so gating on that alone left patients stuck on "arrived" all the way through
+// lab/finance/pharmacy, hours after they'd already moved on. Only show it while nothing past the
+// call step has happened yet; once lab/fin/pha starts (done or skipped), fall through to the normal
+// per-stage progress display instead (see each template's non-arrived branch + stageWaitText).
+const arrived = computed(() => {
+  const timeline = result.value?.timeline;
+  const call = timeline?.find((s) => s.key === 'call');
+  if (!call?.done) return false;
+  return !timeline.some((s) => ['lab', 'fin', 'pha'].includes(s.key) && (s.done || s.skipped));
+});
 const aheadCount = computed(() => result.value?.aheadCount ?? null);
 const urgency = computed(() => {
   if (arrived.value) return 'arrived';
