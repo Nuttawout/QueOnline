@@ -1,0 +1,60 @@
+﻿MediQ Online — เซิร์ฟเวอร์หน้าติดตามคิวออนไลน์ (คู่มือติดตั้ง)
+================================================================
+
+หน้าที่: ให้ผู้ป่วยเปิดลิงก์/สแกน QR บนบัตรคิว (เช่น https://q.โดเมนของคุณ/track/24191/AB12CD) ดูคิวของตัวเองจากมือถือ
+เซิร์ฟเวอร์นี้ "ดึง" ข้อมูลจากฐาน AIA-GO ที่โรงพยาบาลส่งไปพักไว้ (อ่านอย่างเดียว) ไม่ต่อเข้าเซิร์ฟเวอร์คิวหรือ HIS ของโรงพยาบาลเลย
+
+1) สิ่งที่ต้องมี
+   - เครื่องเซิร์ฟเวอร์ (Windows หรือ Linux) ที่ออกอินเทอร์เน็ตได้ และผู้ป่วยเข้าถึงได้ผ่านชื่อโดเมน (มี HTTPS)
+   - Node.js 22 LTS  (https://nodejs.org)
+   - ต่อ SQL Server ของ AIA-GO ได้ (พอร์ต 1433 หรือพอร์ตที่ตั้งไว้) — ผู้ดูแลเครือข่ายต้องเปิดจากเครื่องนี้ไปที่เซิร์ฟเวอร์ AIA-GO เท่านั้น
+   - บัญชีอ่านอย่างเดียว mediq_online_reader (สร้างโดยสคริปต์ 009 บน AIA-GO)
+
+2) ติดตั้ง (ครั้งแรก)
+   - ก๊อปโฟลเดอร์ MediQ-Online ทั้งโฟลเดอร์ไปไว้ที่เซิร์ฟเวอร์ เช่น C:\MediQ-Online
+   - เปิด Command Prompt ในโฟลเดอร์นั้น แล้วรัน:   npm ci --omit=dev
+   - ก๊อป .env.example เป็น .env แล้วแก้ค่า (ดูข้อ 3)
+   - ลองรัน:  start.bat   ควรขึ้น "🌐 MediQ Online listening on http://localhost:3100"
+   - ลองเปิด http://localhost:3100/api/health  ควรได้ {"ok":true,...}
+
+3) ค่าใน .env (แบบดึงจาก AIA-GO)
+   PORT=3100
+   ONLINE_SQL_SERVER=<ชื่อหรือ IP เซิร์ฟเวอร์ AIA-GO>
+   ONLINE_SQL_DATABASE=AIAGO
+   ONLINE_SQL_SCHEMA=MediQ
+   ONLINE_SQL_USER=mediq_online_reader
+   ONLINE_SQL_PASSWORD=<รหัสผ่านที่ตั้งตอนรันสคริปต์ 009>
+   ONLINE_SQL_ENCRYPT=true            (ถ้า SQL Server ตั้งใบรับรองไว้ ถ้าไม่ใช้ false และ ONLINE_SQL_TRUST_CERT=true)
+   ONLINE_PUBLIC_DIST=<โฟลเดอร์ track ข้างๆ>   (ใช้ start.bat ไม่ต้องตั้ง)
+   TRUST_PROXY=1                       (เมื่อมี HTTPS proxy อยู่ข้างหน้า)
+   ONLINE_HOSPITALS=                   (ปล่อยว่าง = ไม่รับข้อมูลที่เครื่องนี้ ดึงอย่างเดียว)
+   ONLINE_DEFAULT_HOSPITAL=24191       (ลิงก์ที่ไม่มีรหัสโรงพยาบาลจะถือเป็นของสาขานี้ ใส่เมื่อมีสาขาเดียวหรืออยากมีค่าเริ่มต้น)
+
+4) ให้ทำงานตลอด (Windows)
+   - ใช้ NSSM (https://nssm.cc): nssm install MediQOnline "C:\Program Files\nodejs\node.exe" src\index.js
+     ตั้ง Startup directory = โฟลเดอร์ MediQ-Online และ Environment: ONLINE_PUBLIC_DIST=C:\MediQ-Online\track แล้ว nssm start MediQOnline
+   - หรือใช้ pm2:  npm i -g pm2 ; pm2 start src\index.js --name mediq-online ; pm2 save
+   Linux/Docker: ใช้ Dockerfile + docker-compose.example.yml ในที่เก็บโค้ด (online/)
+
+5) HTTPS (จำเป็น — ผู้ป่วยใช้มือถือ)
+   - ตั้ง proxy หน้าตัวแอป: IIS (URL Rewrite + ARR), Nginx หรือ Caddy ชี้โดเมนมาที่ http://127.0.0.1:3100
+   - ต้องส่งต่อ WebSocket ด้วย (หน้าติดตามอัปเดตสด ถ้าไม่ได้ส่งต่อ จะอัปเดตช้าลงแต่ยังใช้ได้)
+   - หรือใช้ Cloudflare Tunnel (ไม่ต้องเปิดพอร์ตเข้าเลย)
+
+6) ไฟร์วอลล์ของเซิร์ฟเวอร์นี้
+   - ขาเข้า: 443 (HTTPS) เท่านั้น — ปิดพอร์ต 3100 ไม่ให้เข้าจากภายนอก
+   - ขาออก: 1433 ไปยังเซิร์ฟเวอร์ AIA-GO เครื่องเดียว
+
+7) ทดสอบ
+   - ที่โรงพยาบาลตั้ง AIAGO_SQL_* และ ONLINE_SYNC_SITE=<รหัสโรงพยาบาล> แล้ว restart เซิร์ฟเวอร์คิว
+   - ออกคิว 1 ใบ สแกน QR บนบัตร ควรเห็นคิวภายใน 2-3 วินาที และเปลี่ยนสถานะสดเมื่อเรียกคิว
+   - ถ้าไม่เห็น: เปิด /api/health (ต่อฐานได้ไหม) และดูข้อความในหน้าต่าง start.bat
+
+8) อัปเดตเวอร์ชันใหม่
+   - หยุดบริการ ก๊อปโฟลเดอร์ src กับ track ทับ (ไม่ต้องแตะ .env) แล้วเริ่มบริการใหม่
+   - ข้อมูลอยู่ที่ AIA-GO ไม่หายเมื่ออัปเดต
+
+ความปลอดภัย
+   - เซิร์ฟเวอร์นี้มีเฉพาะข้อมูลที่ผู้ป่วยเห็นได้ (ไม่มีชื่อ HN เบอร์โทร) และอ่านอย่างเดียว
+   - รหัสติดตามเป็นรหัสสุ่ม 6 หลัก ค้นด้วยเลขคิวปิดไว้ (เปิดได้ด้วย ALLOW_NUMBER_LOOKUP=true ไม่แนะนำ)
+   - อย่าให้ไฟล์ .env หลุดออกไปนอกเครื่อง

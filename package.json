@@ -1,0 +1,17 @@
+{
+  "name": "mediq-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Internet-facing patient queue tracking: receives signed snapshots from the hospital, serves them read-only",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mssql": "^11.0.1",
+    "socket.io": "^4.8.1"
+  }
+}
