@@ -1,40 +1,8 @@
 {
-  "name": "client",
+  "name": "qdee-track-site",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource/anuphan": "^5.3.0",
-    "@fontsource/archivo": "^5.3.0",
-    "@fontsource/bebas-neue": "^5.3.0",
-    "@fontsource/big-shoulders-display": "^5.3.0",
-    "@fontsource/chakra-petch": "^5.3.0",
-    "@fontsource/fredoka": "^5.3.0",
-    "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@fontsource/ibm-plex-sans-thai": "^5.3.0",
-    "@fontsource/k2d": "^5.3.0",
-    "@fontsource/kanit": "^5.3.0",
-    "@fontsource/manrope": "^5.3.0",
-    "@fontsource/mitr": "^5.3.0",
-    "@fontsource/noto-sans-thai": "^5.3.0",
-    "@fontsource/plus-jakarta-sans": "^5.3.0",
-    "@fontsource/prompt": "^5.3.0",
-    "@fontsource/quicksand": "^5.3.0",
-    "@fontsource/sarabun": "^5.3.0",
-    "@mdi/font": "^7.4.47",
-    "axios": "^1.20.0",
-    "canvas-confetti": "^1.9.4",
-    "qr-scanner": "^1.4.2",
-    "vue": "^3.5.41",
-    "vuetify": "^3.13.2"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.8",
-    "vite": "^8.2.2"
-  }
+  "description": "Qdee patient queue tracking page: static files, no dependencies. The build only copies site/ to dist/.",
+  "scripts": { "build": "node build.js" }
 }
