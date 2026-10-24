@@ -1,0 +1,12 @@
+{
+  "name": "Qdee คิวดี",
+  "short_name": "Qdee",
+  "description": "ติดตามคิวของคุณบนมือถือ",
+  "start_url": "/track",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#05080f",
+  "theme_color": "#05080f",
+  "lang": "th",
+  "icons": [{ "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }]
+}
